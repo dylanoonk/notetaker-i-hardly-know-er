@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Note</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Custom styles -->
+  <style>
+    .editor-container {
+      height: 80vh;
+      overflow-y: auto;
+    }
+    .preview-container {
+      height: 80vh;
+      overflow-y: auto;
+      background-color: #f8f9fa;
+      border: 1px solid #ddd;
+      padding: 1rem;
+    }
+    @media (max-width: 767.98px) {
+      .editor-container,
+      .preview-container {
+        height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container py-4">
+    <h1 class="mb-4">Edit Note</h1>
+    <form action="/edit/<%= post.id %>" method="POST">
+      <div class="row">
+        <!-- Text Input (Editor) Section -->
+        <div class="col-md-6 editor-container">
+          <div class="mb-3">
+            <label for="noteContent" class="form-label">Note Content</label>
+            <textarea id="noteContent" name="content" class="form-control" rows="20"><%= post.content %></textarea>
+          </div>
+        </div>
+        <!-- Preview Section -->
+        <div class="col-md-6 preview-container">
+          <h4>Preview</h4>
+          <div id="preview">
+            <%= post.content %>
+          </div>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary mt-3">Save Changes</button>
+    </form>
+  </div>
+
+  <!-- Optional: Include Marked.js to render Markdown preview in real-time -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.0.10/marked.min.js"></script>
+  <script>
+    const textarea = document.getElementById('noteContent');
+    const preview = document.getElementById('preview');
+
+    function updatePreview() {
+      preview.innerHTML = marked.parse(textarea.value);
+    }
+
+    textarea.addEventListener('input', updatePreview);
+
+    // Initialize preview on page load
+    updatePreview();
+  </script>
+  <!-- Bootstrap Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
