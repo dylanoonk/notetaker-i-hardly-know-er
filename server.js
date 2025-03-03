@@ -4,6 +4,7 @@ const AdmZip = require('adm-zip');  // For unzipping files
 const marked = require('marked');  // For markdown processing
 const path = require('path');
 const fs = require('fs');
+const { message } = require('statuses');
 
 const app = express();
 const port = 3000;
@@ -53,7 +54,7 @@ app.post('/upload', upload.single('zipfile'), (req, res) => {
         processUploadedZip(req.file.path);
         res.redirect('/');
     } catch (error) {
-        res.status(500).send('Error processing upload: ' + error.message);
+        res.status(500).render('error', { message: 'Error processing upload: ' + error.message });
     }
 });
 
@@ -83,7 +84,7 @@ app.get('/post/:id/images/:imageName', (req, res) => {
         res.sendFile(imagePath);
     } catch (error) {
         console.error('Error sending image:', error);
-        res.status(500).send('Error sending image');
+        res.status(500).render('error', { message: 'Error sending image' });
     }
     
 });
@@ -91,12 +92,15 @@ app.get('/post/:id/images/:imageName', (req, res) => {
 app.get('/edit/:id', (req, res) => {
     const postId = req.params.id;
     const post = getPostById(postId);
+    var content = fs.readFileSync(path.join(__dirname, 'public/posts', postId, 'README.md'), 'utf8');
 
     if (!post) {
         return res.status(404).render('404', { message: 'Post not found' });
     }
 
-    res.render('edit', { post });
+    content = content.replace('/[\r\n]/gm', '\\n');
+    content = content.replace('\n', '\\n');
+    res.render('edit', { post, content });
 });
 
 app.get('/delete/:id', (req, res) => {
@@ -120,8 +124,6 @@ app.get('/delete/:id', (req, res) => {
     fs.writeFileSync(postsFile, JSON.stringify(posts, null, 2));
     res.redirect('/');
 });
-
-
 
 
 app.all('*', (req, res) => {
