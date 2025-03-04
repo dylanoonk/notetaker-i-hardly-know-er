@@ -2,9 +2,6 @@
 
 ## Introduction
 
-
-balls sex nuts
-
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam auctor, nisl eget ultricies tincidunt, nisl nisl aliquam nisl, eget ultricies nisl nisl eget nisl.
 ***
 ![Beautiful landscape](images/pic1.jpg)
