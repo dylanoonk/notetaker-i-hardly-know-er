@@ -1,4 +1,4 @@
-# My NEW Test Markdown File
+# Test Markdown File
 
 ## Introduction
 

@@ -131,10 +131,10 @@ app.post('/edit/:id', (req, res) => {
 
     // Save the updated content to the README.md file
     const readmePath = path.join(__dirname, 'public/posts', postId, 'README.md');
-    const htmlContent = replaceImagePathsWithCorrectPaths(marked.parse(content), postId);
+    
     fs.writeFileSync(readmePath, content);
     // Update the HTML content in posts.json
-    addToPostsDB(postId, htmlContent);
+    addToPostsDB(postId, content);
 
     res.status(200).redirect('/post/' + postId);
     
@@ -384,12 +384,25 @@ function replaceImagePathsWithCorrectPaths(htmlContent, postId) {
 }
 
 //add to posts.json
-function addToPostsDB(postId, htmlContent) {
+function addToPostsDB(postId, mdContent) {
     const posts = getPosts();
-    const post = posts.find(p => p.id === postId);
+    let post = posts.find(p => p.id === postId);
+    const htmlContent = replaceImagePathsWithCorrectPaths(marked.parse(mdContent), postId);
+
+    const metadata = {
+        id: postId,
+        title: getTitle(mdContent) || 'Untitled Post',
+        date: new Date().toISOString(),
+        contentPath: path.join('posts', postId, 'README.md'),
+        htmlContent
+    };
 
     if (post) {
-        post.htmlContent = htmlContent;
+        post.id = metadata.id;
+        post.title = metadata.title;
+        post.date = metadata.date;
+        post.contentPath = metadata.contentPath;
+        post.htmlContent = metadata.htmlContent;
         fs.writeFileSync(postsFile, JSON.stringify(posts, null, 2));
     }
 }
