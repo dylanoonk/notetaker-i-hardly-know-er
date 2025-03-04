@@ -35,7 +35,7 @@
         <!-- Text Input (Editor) Section -->
         <div class="col-md-6 editor-container">
           <div class="mb-3">
-            <textarea id="noteContent" name="content" class="form-control" rows="20"></textarea>
+            <textarea id="noteContent" name="content" class="form-control" rows="20" autocomplete="off"> <%= content %> </textarea>
           </div>
         </div>
         <!-- Preview Section -->
@@ -71,7 +71,6 @@
       updatePreview();
     };
     
-    textarea.value = '<%= content %>';
     console.log('Textarea value:', textarea.value);
   </script>
 </body>

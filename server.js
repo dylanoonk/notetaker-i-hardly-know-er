@@ -98,8 +98,7 @@ app.get('/edit/:id', (req, res) => {
         return res.status(404).render('404', { message: 'Post not found' });
     }
 
-    content = content.replace('/[\r\n]/gm', '\\n');
-    content = content.replace('\n', '\\n');
+    
     res.render('edit', { post, content });
 });
 
