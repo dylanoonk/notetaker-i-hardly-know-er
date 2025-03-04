@@ -6,6 +6,7 @@
   <title>Edit Note</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.min.css">
   <!-- Custom styles -->
   <style>
     .editor-container {
@@ -19,59 +20,224 @@
       border: 1px solid #ddd;
       padding: 1rem;
     }
+    .post-header {
+      background-color: #f1f5f9;
+    }
+    .sidebar {
+      height: 80vh;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      padding: 1rem;
+      background-color: #fff;
+    }
+    .sidebar h4 {
+      margin-bottom: 1rem;
+    }
     @media (max-width: 767.98px) {
       .editor-container,
-      .preview-container {
+      .preview-container,
+      .sidebar {
         height: auto;
       }
     }
   </style>
 </head>
 <body>
-  <div class="container py-4">
-    <h1 class="mb-4">Edit Note</h1>
-    <form action="/edit/<%= post.id %>" method="POST">
+  <div class="post-header py-4 mb-4">
+    <div class="container">
       <div class="row">
-        <!-- Text Input (Editor) Section -->
-        <div class="col-md-6 editor-container">
-          <div class="mb-3">
-            <textarea id="noteContent" name="content" class="form-control" rows="20" autocomplete="off"> <%= content %> </textarea>
-          </div>
-        </div>
-        <!-- Preview Section -->
-        <div class="col-md-6 preview-container">
-          <h4>Preview</h4>
-          <div id="preview">
-            
-          </div>
+        <div class="col">
+          <a href="/" class="back-link d-inline-flex align-items-center mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+            </svg>
+            <span class="ms-2">Back to Home</span>
+          </a>
+          <h1 class="display-5 fw-bold"><%= post.title %></h1>
+          <p class="text-muted">
+            <small>Posted on <%= new Date(post.date).toLocaleDateString('en-US', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            }) %></small>
+          </p>
         </div>
       </div>
-      <button type="submit" class="btn btn-primary mt-3">Save Changes</button>
-    </form>
+    </div>
   </div>
   
+  <div class="container py-4">
+    <h1 class="mb-4">Edit Note</h1>
+    <div class="row">
+      <!-- Sidebar Column -->
+      <div class="col-md-3">
+        <div class="sidebar">
+          <h4>Images</h4>
+          <div id="imageList">
+            <!-- Image buttons will be dynamically inserted here -->
+          </div>
+          <hr>
+          <button class="btn btn-success w-100" id="uploadNewImageBtn">Upload New Image</button>
+          <input type="file" id="imageFileInput" name="image" accept="image/*" style="display: none;">
+        </div>
+      </div>
+      <!-- Main Content Column -->
+      <div class="col-md-9">
+        <form action="/edit/<%= post.id %>" method="POST">
+          <div class="row">
+            <!-- Text Input (Editor) Section -->
+            <div class="col-md-6 editor-container">
+              <div class="mb-3">
+                <textarea id="noteContent" name="content" class="form-control" rows="20" autocomplete="off"><%= content %></textarea>
+              </div>
+            </div>
+            <!-- Preview Section -->
+            <div class="col-md-6 preview-container">
+              <h4>Preview</h4>
+              <div id="preview">
+              </div>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary mt-3">Save Changes</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal for Enlarged Image -->
+  <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="imageModalLabel">Image Preview</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center">
+          <img id="modalImage" src="" alt="Enlarged Image" class="img-fluid">
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Bootstrap JS Bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Showdown for Markdown -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
-
+  
   <script>
-    console.log('Editor script loaded');
     const textarea = document.getElementById('noteContent');
     const preview = document.getElementById('preview');
-    
+    const postId = '<%= post.id %>';
     var converter = new showdown.Converter();
 
     function updatePreview() {
-      preview.innerHTML = converter.makeHtml(textarea.value);
+      var content = converter.makeHtml(textarea.value);
+      // Replace images/${file} with images/<postId>/${file}
+      const regex = /images\/([^'"]+)/g;
+      content = content.replace(regex, function(match, p1) {
+        return `${postId}/images/${p1}`;
+      });
+      preview.innerHTML = content;
     }
     
     textarea.addEventListener('input', updatePreview);
     
-    // Initialize preview on page load
     window.onload = function() {
       updatePreview();
+      fetchImages();
     };
-    
-    console.log('Textarea value:', textarea.value);
+
+    // Function to fetch images and update sidebar
+    function fetchImages() {
+      fetch(`/edit/${postId}/images`)
+        .then(response => response.json())
+        .then(images => {
+          const imageListDiv = document.getElementById('imageList');
+          imageListDiv.innerHTML = ''; // Clear existing images
+          images.forEach(imageName => {
+            const imageItem = document.createElement('div');
+            imageItem.className = 'mb-2 d-flex justify-content-between align-items-center';
+
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = imageName;
+            nameSpan.style.flex = '1';
+
+            const enlargeBtn = document.createElement('button');
+            enlargeBtn.className = 'btn btn-primary btn-sm me-1';
+            enlargeBtn.textContent = 'Enlarge';
+            enlargeBtn.onclick = () => {
+              const modalImage = document.getElementById('modalImage');
+              modalImage.src = `/edit/${postId}/images/${imageName}`;
+              const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+              imageModal.show();
+            };
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn btn-danger btn-sm';
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.onclick = () => {
+              if (confirm('Are you sure you want to delete this image? This is PERMANENT!')) {
+                fetch(`/edit/${postId}/images/${imageName}`, {
+                  method: 'DELETE'
+                })
+                .then(response => {
+                  if (response.ok) {
+                    fetchImages(); // Refresh the list
+                    updatePreview();
+                  } else {
+                    alert('Error deleting image');
+                  }
+                })
+                .catch(err => {
+                  console.error('Error:', err);
+                  alert('Error deleting image');
+                });
+              }
+            };
+
+            imageItem.appendChild(nameSpan);
+            imageItem.appendChild(enlargeBtn);
+            imageItem.appendChild(deleteBtn);
+            imageListDiv.appendChild(imageItem);
+          });
+        })
+        .catch(err => {
+          console.error('Error fetching images:', err);
+        });
+    }
+
+    // Upload new image functionality
+    const uploadNewImageBtn = document.getElementById('uploadNewImageBtn');
+    const imageFileInput = document.getElementById('imageFileInput');
+
+    uploadNewImageBtn.addEventListener('click', () => {
+      imageFileInput.click();
+    });
+
+    imageFileInput.addEventListener('change', () => {
+      const file = imageFileInput.files[0];
+      if (file) {
+        const formData = new FormData();
+        formData.append('image', file);
+        fetch(`/upload/${postId}/images`, {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => {
+          if (response.ok) {
+            alert('Image uploaded successfully');
+            fetchImages();
+          } else {
+            response.text().then(text => alert('Upload failed: ' + text));
+          }
+        })
+        .catch(err => {
+          console.error('Error uploading image:', err);
+          alert('Error uploading image');
+        });
+      }
+    });
   </script>
 </body>
 </html>

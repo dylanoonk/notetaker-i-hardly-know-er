@@ -58,6 +58,35 @@ app.post('/upload', upload.single('zipfile'), (req, res) => {
     }
 });
 
+//uploads an image
+app.post('/upload/:id/images', upload.single('image'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).render('error', 'No file uploaded');
+    }
+
+    try {
+        const postId = req.params.id;
+        const originalname = req.file.originalname;
+        const tempPath = req.file.path; // current location: uploads/filename
+        const targetDir = path.join(__dirname, 'public', 'posts', postId, 'images');
+        const targetPath = path.join(targetDir, originalname);
+
+        // Create the destination directory if it doesn't exist
+        fs.mkdirSync(targetDir, { recursive: true });
+
+        // Move the file from tempPath to targetPath
+        fs.rename(tempPath, targetPath, (err) => {
+            if (err) {
+                return res.status(500).render('error', { message: 'Error moving file: ' + err.message });
+            }
+            
+            res.status(200).send('File uploaded and moved successfully!');
+        });
+    } catch (error) {
+        res.status(500).render('error', { message: 'Error processing upload: ' + error.message });
+    }
+});
+
 app.get('/post/:id', (req, res) => {
     const postId = req.params.id;
     const post = getPostById(postId);
@@ -70,7 +99,6 @@ app.get('/post/:id', (req, res) => {
 });
 
 app.get('/post/:id/images/:imageName', (req, res) => {
-    console.log('Fetching image for post:', req.params.id, 'Image:', req.params.imageName);
     const postId = req.params.id;
     const imageName = req.params.imageName;
     const post = getPostById(postId);
@@ -102,7 +130,68 @@ app.get('/edit/:id', (req, res) => {
     res.render('edit', { post, content });
 });
 
-app.get('/delete/:id', (req, res) => {
+//returns the image
+app.get('/edit/:id/images/:imageName', (req, res) => {
+    const postId = req.params.id;
+    const post = getPostById(postId);
+    const imageName = req.params.imageName;
+
+    if (!post) {
+        return res.status(404).render('404', { message: 'Post not found'});
+    }
+
+    try {
+        const imagePath = path.join(__dirname, 'public/posts', postId, 'images', imageName);
+        res.sendFile(imagePath);
+    } catch (error) {
+        console.error('Error sending image:', error);
+        res.status(500).render('error', { message: 'Error sending image' });
+    }
+});
+
+//returns a list of all images in the post images directory
+app.get('/edit/:id/images', (req, res) => {
+    const postId = req.params.id;
+    const post = getPostById(postId);
+
+    if (!post) {
+        return res.status(404).render('404', { message: 'Post not found'});
+    }
+
+    try {
+        const imagesDir = path.join(__dirname, 'public/posts', postId, 'images');
+        const images = fs.readdirSync(imagesDir);
+        res.status(200).json(images);
+    } catch (error) {
+        console.error('Error reading images directory:', error);
+        res.status(500).render('error', { message: 'Error reading images directory' });
+    }
+});
+
+//deletes an image
+app.delete('/edit/:id/images/:imageName', (req, res) => { 
+    const postId = req.params.id;
+    const post = getPostById(postId);
+    const imageName = req.params.imageName;
+
+    if (!post) {
+        return res.status(404).render('404', { message: 'Post not found'});
+    }
+
+    try {
+        const imagePath = path.join(__dirname, 'public/posts', postId, 'images', imageName);
+        fs.rmSync(imagePath);
+        res.status(200).send('Image deleted successfully');
+    } catch (error) {
+        console.error('Error deleting image:', error);
+        res.status(500).render('error', { message: 'Error deleting image' });
+    }
+});
+
+
+
+
+app.delete('/post/:id', (req, res) => {
     const postId = req.params.id;
     const post = getPostById(postId);
 
@@ -121,7 +210,7 @@ app.get('/delete/:id', (req, res) => {
     let posts = getPosts();
     posts = posts.filter(p => p.id !== postId);
     fs.writeFileSync(postsFile, JSON.stringify(posts, null, 2));
-    res.redirect('/');
+    res.status(200).send('Post deleted successfully');
 });
 
 
