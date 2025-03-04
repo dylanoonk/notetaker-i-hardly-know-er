@@ -5,6 +5,7 @@ const marked = require('marked');  // For markdown processing
 const path = require('path');
 const fs = require('fs');
 const { message } = require('statuses');
+const { emitWarning } = require('process');
 
 const app = express();
 const port = 3000;
@@ -26,6 +27,7 @@ fs.mkdirSync('uploads', { recursive: true });
 // Set up templating engine
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
+app.use(express.urlencoded({ extended: true }));
 
 // Set up posts storage
 const postsFile = path.join(__dirname, 'data', 'posts.json');
@@ -111,9 +113,30 @@ app.get('/post/:id/images/:imageName', (req, res) => {
         const imagePath = path.join(__dirname, 'public/posts', postId, 'images', imageName);
         res.sendFile(imagePath);
     } catch (error) {
-        console.error('Error sending image:', error);
+        //console.error('Error sending image:', error);
         res.status(500).render('error', { message: 'Error sending image' });
     }
+    
+});
+
+//edit post
+app.post('/edit/:id', (req, res) => {
+    const content = req.body.content;
+    const postId = req.params.id;
+    const post = getPostById(postId);
+
+    if (!post) {
+        return res.status(404).render('404', { message: 'Post not found' });
+    }
+
+    // Save the updated content to the README.md file
+    const readmePath = path.join(__dirname, 'public/posts', postId, 'README.md');
+    const htmlContent = replaceImagePathsWithCorrectPaths(marked.parse(content), postId);
+    fs.writeFileSync(readmePath, content);
+    // Update the HTML content in posts.json
+    addToPostsDB(postId, htmlContent);
+
+    res.status(200).redirect('/post/' + postId);
     
 });
 
@@ -207,9 +230,7 @@ app.delete('/post/:id', (req, res) => {
         return res.status(500).render('error', { message: 'Error deleting post directory' });
     }
     // Remove from posts.json
-    let posts = getPosts();
-    posts = posts.filter(p => p.id !== postId);
-    fs.writeFileSync(postsFile, JSON.stringify(posts, null, 2));
+    removeFromPostsDB(postId);
     res.status(200).send('Post deleted successfully');
 });
 
@@ -350,8 +371,8 @@ function getPostById(id) {
     return posts.find(post => post.id === id);
 }
 
-function replaceImagePathsWithCorrectPaths(htmlContent, postId, folderName) {
-    const imgDir = path.join(__dirname, 'public/posts', postId, folderName, '../', 'images');
+function replaceImagePathsWithCorrectPaths(htmlContent, postId) {
+    const imgDir = path.join(__dirname, 'public/posts', postId, 'images');
     const imgFiles = fs.readdirSync(imgDir);
 
     imgFiles.forEach(file => {
@@ -360,4 +381,24 @@ function replaceImagePathsWithCorrectPaths(htmlContent, postId, folderName) {
     });
 
     return htmlContent;
+}
+
+//add to posts.json
+function addToPostsDB(postId, htmlContent) {
+    const posts = getPosts();
+    const post = posts.find(p => p.id === postId);
+
+    if (post) {
+        post.htmlContent = htmlContent;
+        fs.writeFileSync(postsFile, JSON.stringify(posts, null, 2));
+    }
+}
+
+
+
+// Remove from posts.json
+function removeFromPostsDB(postId) {
+    let posts = getPosts();
+    posts = posts.filter(p => p.id !== postId);
+    fs.writeFileSync(postsFile, JSON.stringify(posts, null, 2));
 }

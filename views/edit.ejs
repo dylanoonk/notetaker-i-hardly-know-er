@@ -11,8 +11,16 @@
   <style>
     .editor-container {
       height: 80vh;
-      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
     }
+
+    .editor-container .form-control {
+      flex-grow: 1;
+      width: 100%;
+      resize: none; 
+    }
+
     .preview-container {
       height: 80vh;
       overflow-y: auto;
@@ -88,9 +96,7 @@
           <div class="row">
             <!-- Text Input (Editor) Section -->
             <div class="col-md-6 editor-container">
-              <div class="mb-3">
-                <textarea id="noteContent" name="content" class="form-control" rows="20" autocomplete="off"><%= content %></textarea>
-              </div>
+                <textarea id="noteContent" name="content" class="form-control" autocomplete="off"><%= content %></textarea>
             </div>
             <!-- Preview Section -->
             <div class="col-md-6 preview-container">

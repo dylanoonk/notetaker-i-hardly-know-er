@@ -1,2 +1,3 @@
-# notetaker-i-hardly-know-er
-A simple markdown editor and storage for MY notes
+# Notetaker? I Hardly Know 'er!
+
+I decided that all the other notetaking apps sucked too much and that I must make my own.
