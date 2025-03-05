@@ -68,10 +68,14 @@
         <% } %>
       </div>
       
-      <!-- Upload Section -->
+      <!-- Upload & Create Section -->
       <div class="col-lg-4">
         <div class="upload-section p-4 shadow-sm">
-          <h3 class="mb-3">Upload New Note</h3>
+          <h3 class="mb-3">New Note</h3>
+          <!-- Create New Note Button -->
+          <div class="d-grid mb-3">
+            <a href="/create" class="btn btn-secondary">Create New Note</a>
+          </div>
           <form action="/upload" method="POST" enctype="multipart/form-data">
             <div class="mb-3">
               <label for="zipfile" class="form-label">Select ZIP file (containing markdown and images):</label>
@@ -83,8 +87,7 @@
           </form>
         </div>
       </div>
-    </div>
-    
+
     <footer class="mt-5 py-3 text-center text-muted">
       <small>&copy; <%= new Date().getFullYear() %> Notetaker? I Hardly Know 'er!</small>
     </footer>

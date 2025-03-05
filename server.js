@@ -151,7 +151,7 @@ app.get('/edit/:id', (req, res) => {
 
     
     res.render('edit', { post, content });
-});
+}); 
 
 //returns the image
 app.get('/edit/:id/images/:imageName', (req, res) => {
@@ -190,6 +190,20 @@ app.get('/edit/:id/images', (req, res) => {
         res.status(500).render('error', { message: 'Error reading images directory' });
     }
 });
+
+app.get('/create', (req, res) => { 
+    fs.copyFile(path.join(__dirname, 'templates', 'default-template.zip'), path.join(__dirname, 'uploads', 'default-template.zip'), (err) => {
+        if (err) {
+            console.error('Error copying template:', err);
+            return res.status(500).render('error', { message: 'Error copying template' });
+        }
+    });
+
+    let post = processUploadedZip(path.join(__dirname, 'uploads', 'default-template.zip'));
+    res.redirect('/edit/' + post.id);
+
+});
+
 
 //deletes an image
 app.delete('/edit/:id/images/:imageName', (req, res) => { 
