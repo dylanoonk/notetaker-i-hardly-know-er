@@ -51,6 +51,12 @@ app.get('/', (req, res) => {
     res.render('index', { posts: getPosts() });
 });
 
+app.get('/favicon.ico', (req, res) => {
+    const faviconPath = path.join(__dirname, 'public', 'favicon.ico');
+    res.sendFile(faviconPath);
+});
+
+
 app.post('/upload', upload.single('zipfile'), (req, res) => {
     if (!checkSession(req.cookies.sessionToken)) { res.redirect('/login'); return;}
     if (!req.file) {
