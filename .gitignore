@@ -136,3 +136,5 @@ package.json
 
 data/posts.json
 public/posts/*
+
+config.json

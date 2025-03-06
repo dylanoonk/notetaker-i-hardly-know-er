@@ -4,11 +4,12 @@ const AdmZip = require('adm-zip');  // For unzipping files
 const marked = require('marked');  // For markdown processing
 const path = require('path');
 const fs = require('fs');
-const { message } = require('statuses');
-const { emitWarning } = require('process');
+const cookieParser = require('cookie-parser');
+const config = require('./config.json');
+
 
 const app = express();
-const port = 3000;
+const port = config.port;
 
 // Set up storage for uploaded files
 const storage = multer.diskStorage({
@@ -28,6 +29,7 @@ fs.mkdirSync('uploads', { recursive: true });
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Set up posts storage
 const postsFile = path.join(__dirname, 'data', 'posts.json');
@@ -40,13 +42,17 @@ if (!fs.existsSync(postsFile)) {
     fs.writeFileSync(postsFile, JSON.stringify([]));
 }
 
+let validSessions = [];
+
 // Routes
 app.get('/', (req, res) => {
+    if (!checkSession(req.cookies.sessionToken)) { res.redirect('/login'); return;}
     // List available blog posts
     res.render('index', { posts: getPosts() });
 });
 
 app.post('/upload', upload.single('zipfile'), (req, res) => {
+    if (!checkSession(req.cookies.sessionToken)) { res.redirect('/login'); return;}
     if (!req.file) {
         return res.status(400).send('No file uploaded');
     }
@@ -62,6 +68,7 @@ app.post('/upload', upload.single('zipfile'), (req, res) => {
 
 //uploads an image
 app.post('/upload/:id/images', upload.single('image'), (req, res) => {
+    if (!checkSession(req.cookies.sessionToken)) { res.redirect('/login'); return;}
     if (!req.file) {
         return res.status(400).render('error', 'No file uploaded');
     }
@@ -90,6 +97,7 @@ app.post('/upload/:id/images', upload.single('image'), (req, res) => {
 });
 
 app.get('/post/:id', (req, res) => {
+    if (!checkSession(req.cookies.sessionToken)) { res.redirect('/login'); return;}
     const postId = req.params.id;
     const post = getPostById(postId);
 
@@ -101,6 +109,7 @@ app.get('/post/:id', (req, res) => {
 });
 
 app.get('/post/:id/images/:imageName', (req, res) => {
+    if (!checkSession(req.cookies.sessionToken)) { res.redirect('/login'); return;}
     const postId = req.params.id;
     const imageName = req.params.imageName;
     const post = getPostById(postId);
@@ -121,6 +130,7 @@ app.get('/post/:id/images/:imageName', (req, res) => {
 
 //edit post
 app.post('/edit/:id', (req, res) => {
+    if (!checkSession(req.cookies.sessionToken)) { res.redirect('/login'); return;}
     const content = req.body.content;
     const postId = req.params.id;
     const post = getPostById(postId);
@@ -141,6 +151,7 @@ app.post('/edit/:id', (req, res) => {
 });
 
 app.get('/edit/:id', (req, res) => {
+    if (!checkSession(req.cookies.sessionToken)) { res.redirect('/login'); return;}
     const postId = req.params.id;
     const post = getPostById(postId);
     var content = fs.readFileSync(path.join(__dirname, 'public/posts', postId, 'README.md'), 'utf8');
@@ -155,6 +166,7 @@ app.get('/edit/:id', (req, res) => {
 
 //returns the image
 app.get('/edit/:id/images/:imageName', (req, res) => {
+    if (!checkSession(req.cookies.sessionToken)) { res.redirect('/login'); return;}
     const postId = req.params.id;
     const post = getPostById(postId);
     const imageName = req.params.imageName;
@@ -174,6 +186,7 @@ app.get('/edit/:id/images/:imageName', (req, res) => {
 
 //returns a list of all images in the post images directory
 app.get('/edit/:id/images', (req, res) => {
+    if (!checkSession(req.cookies.sessionToken)) { res.redirect('/login'); return;}
     const postId = req.params.id;
     const post = getPostById(postId);
 
@@ -192,6 +205,7 @@ app.get('/edit/:id/images', (req, res) => {
 });
 
 app.get('/create', (req, res) => { 
+    if (!checkSession(req.cookies.sessionToken)) { res.redirect('/login'); return;}
     fs.copyFile(path.join(__dirname, 'templates', 'default-template.zip'), path.join(__dirname, 'uploads', 'default-template.zip'), (err) => {
         if (err) {
             console.error('Error copying template:', err);
@@ -207,6 +221,7 @@ app.get('/create', (req, res) => {
 
 //deletes an image
 app.delete('/edit/:id/images/:imageName', (req, res) => { 
+    if (!checkSession(req.cookies.sessionToken)) { res.redirect('/login'); return;}
     const postId = req.params.id;
     const post = getPostById(postId);
     const imageName = req.params.imageName;
@@ -225,10 +240,39 @@ app.delete('/edit/:id/images/:imageName', (req, res) => {
     }
 });
 
+app.get('/login', (req, res) => {
+    res.render('login');
+});
 
+app.post('/login', (req, res) => {
+    const username = req.body.username;
+    const password = req.body.password;
+
+    
+    if (username === config.username && password === config.password) { 
+        // Generate a random session token
+        const sessionToken = require('crypto').randomBytes(64).toString('hex');
+        
+        
+        // Store session token in cookie
+        res.cookie('sessionToken', sessionToken, {
+            httpOnly: true,
+            secure: config.secureCookie,
+            maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        });
+        
+        validSessions.push(sessionToken);
+        
+        // Redirect to home page
+        res.redirect('/');
+    } else {
+        res.render('login', { message: 'Invalid credentials' });
+    }
+});
 
 
 app.delete('/post/:id', (req, res) => {
+    if (!checkSession(req.cookies.sessionToken)) { res.redirect('/login'); return;}
     const postId = req.params.id;
     const post = getPostById(postId);
 
@@ -250,6 +294,7 @@ app.delete('/post/:id', (req, res) => {
 
 
 app.all('*', (req, res) => {
+    if (!checkSession(req.cookies.sessionToken)) { res.redirect('/login'); return;}
     res.status(404).render('404', { message: 'Page not found' });
 });
 
@@ -421,6 +466,17 @@ function addToPostsDB(postId, mdContent) {
     }
 }
 
+/*
+USE:
+if (!checkSession(req.cookies.sessionToken)) { res.redirect('/login'); return;}
+*/
+function checkSession(sessionToken) {
+    if (validSessions.includes(sessionToken)) {
+        return true;
+    }
+    
+    return false;
+}
 
 
 // Remove from posts.json
@@ -428,4 +484,4 @@ function removeFromPostsDB(postId) {
     let posts = getPosts();
     posts = posts.filter(p => p.id !== postId);
     fs.writeFileSync(postsFile, JSON.stringify(posts, null, 2));
-}
+} 
