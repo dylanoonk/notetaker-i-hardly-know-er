@@ -6,7 +6,22 @@ const path = require('path');
 const fs = require('fs');
 const cookieParser = require('cookie-parser');
 const config = require('./config.json');
+const https = require('https');
+const http = require('http');
+const { execSync } = require('child_process');
 
+if (config.https) {
+    if (!fs.existsSync(path.join(__dirname, 'openssl', 'private.key')) || !fs.existsSync(path.join(__dirname, 'openssl', 'cert.pem'))) {
+        fs.mkdirSync('openssl', { recursive: true });
+        execSync('openssl req -x509 -newkey rsa:4096 -keyout openssl/private.pem -out openssl/cert.pem -sha256 -days 3650 -nodes -subj "/C=UK/ST=ENG/L=Shitterton/O=My Butt/OU=My Butt hole/CN=The Shitter"')
+    }
+    
+    var privateKey  = fs.readFileSync('openssl/private.pem', 'utf8');
+    var certificate = fs.readFileSync('openssl/cert.pem', 'utf8');
+
+    var credentials = {key: privateKey, cert: certificate};
+
+}
 
 const app = express();
 const port = config.port;
@@ -263,7 +278,7 @@ app.post('/login', (req, res) => {
         // Store session token in cookie
         res.cookie('sessionToken', sessionToken, {
             httpOnly: true,
-            secure: config.secureCookie,
+            secure: config.https,
             maxAge: 24 * 60 * 60 * 1000 // 24 hours
         });
         
@@ -306,10 +321,15 @@ app.all('*', (req, res) => {
 
 
 
-// Start the server
-app.listen(port, () => {
-    console.log(`Blog server running at http://localhost:${port}`);
-});
+if (config.https) {
+    var httpsServer = https.createServer(credentials, app);
+    httpsServer.listen(port);
+    console.log('server listening on https://localhost:' + port + '/');
+} else {
+    var httpServer = http.createServer(app);
+    httpServer.listen(port);
+    console.log('server listening on http://localhost:' + port + '/');
+}
 
 // Helper functions
 function processUploadedZip(zipPath, allowedDirs = ['images']) {

@@ -91,5 +91,5 @@ This project is licensed under the [MIT License](LICENSE).
 ## Acknowledgements
 
 - Built using [Express](https://expressjs.com/), [EJS](https://ejs.co/), and [Bootstrap](https://getbootstrap.com/).
-- Twemoji: Open source emoji library by Twitter (Used for favicon).
+- Twemoji: Open source emoji library by Twitter (Used for favicon) ([License](https://github.com/twitter/twemoji/blob/master/LICENSE-GRAPHICS)).
 - Inspired by the need for a simple yet powerful note-taking solution.

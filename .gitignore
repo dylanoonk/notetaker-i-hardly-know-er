@@ -138,3 +138,5 @@ data/posts.json
 public/posts/*
 
 config.json
+openssl/cert.pem
+openssl/private.pem

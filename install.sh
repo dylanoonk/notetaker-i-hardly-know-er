@@ -3,15 +3,15 @@
 npm init -y
 npm install express ejs multer adm-zip marked path fs cookie-parser
 
-password=$(openssl rand -base64 12)
-username="notetaker"
+PASSWORD=$(openssl rand -base64 12)
+USERNAME="notetaker"
 
 cat > config.json <<EOF
 {
-  "username": "$username",
-  "password": "$password",
+  "username": "$USERNAME",
+  "password": "$PASSWORD",
   "port": 3000,
-  "secureCookie": false 
+  "https": false 
 }
 EOF
 
