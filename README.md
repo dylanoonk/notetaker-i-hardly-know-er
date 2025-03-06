@@ -26,7 +26,7 @@ note.zip:
     └── ...
 ```
 
-## Installation
+## Installation (Linux & MacOS)
 
 1. **Clone the repository:**
 
@@ -45,6 +45,10 @@ note.zip:
    ```
 
    This will create a `config.json` file containing your configuration.
+
+## Installation (Windows)
+
+haha good one
 
 ## Running the Application
 
