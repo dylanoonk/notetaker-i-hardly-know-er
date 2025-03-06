@@ -31,8 +31,8 @@ note.zip:
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/yourusername/notetaker.git
-   cd notetaker
+   git clone https://github.com/dylanoonk/notetaker-i-hardly-know-er.git
+   cd notetaker-i-hardly-know-er
    ```
 
 2. **Run install script:**
