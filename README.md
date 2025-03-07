@@ -3,6 +3,10 @@
 
 Notetaker? I Hardly Know 'Er (NTIHKH) is a lightweight, Markdown-based note-taking webapp built with Node.js, Express, and EJS. It allows you to write, edit, and manage notes with real-time Markdown preview, upload and manage images for your posts, and includes a simple authentication system.
 
+## Notice
+
+This is designed to run on a local server or a NAS. It has not been properly tested for security and should be treated as insecure. Expose to the public-facing internet at your own risk!
+
 ## Features
 
 - **Markdown Editor:** Write your notes in Markdown and see a live preview.
