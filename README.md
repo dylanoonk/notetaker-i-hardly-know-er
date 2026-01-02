@@ -5,7 +5,7 @@ Notetaker? I Hardly Know 'Er (NTIHKH) is a lightweight, Markdown-based note-taki
 
 ## Notice
 
-This is designed to run on a local server or a NAS. It has not been properly tested for security and should be treated as insecure. Expose to the public-facing internet at your own risk!
+**This is designed to run on a local server or a NAS. It has not been properly tested for security and should be treated as insecure. Expose to the public-facing internet at your own risk!**
 
 ## Features
 
